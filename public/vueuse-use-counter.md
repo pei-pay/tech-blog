@@ -9,63 +9,43 @@ organization_url_name: null
 slide: false
 ignorePublish: true
 ---
-# VueUse ソースコード解説: useCounter
+# VueUse の useCounter を作ってみる
 
-<!-- NOTE: 下書き -->
-<!-- TODO: 作成した簡易版の動作確認 -->
+[VueUse](https://vueuse.org/) にはたくさんの便利なコンポーザブルがあります。
 
-useCounter のソースコード解説を行いたいと思います。
+使ったことがある人は多いと思いますが、その内部実装を見たことはありますでしょうか?
 
-- 一番簡単なのでわかりやすい
-- 解説も楽
+今回は [useCounter](https://vueuse.org/shared/useCounter/) を段階的に作ってみようと思います。
 
 ## どういうコンポーザブルか
 
-数値のカウントをいい感じに管理するためのものです。
+リアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、指定した値にセット、リセットなどができます。
 
-- 値の増減 (inc, dec)
-- リセット (reset)
+ドキュメントの [Demo](https://vueuse.org/shared/useCounter/#demo) を触ってもらうのが一番わかりやすいと思います。
 
-### 基本的な使い方
-
-```vue
-<script setup lang="ts">
-import { useCounter } from '@vueuse/core'
-
-const { count, inc, dec, reset } = useCounter()
-
-</script>
-
-<template>
-  <div>
-    <p>カウンター: {{ count }}</p>
-    <button type="button" @click="inc">増加</button>
-    <button type="button" @click="dec">減少</button>
-    <button type="button" @click="reset">リセット</button>
-  </div>
-</template>
-```
-
-- デモ: https://vueuse.org/shared/useCounter/#demo
-
-## まずは簡略化版を作ってみる
+## まずは値の増減、リセットだけ
 
 ```ts
-import { ref  } from 'vue'
+import { ref } from 'vue'
 
-export function useCounter(initialValue: number = 0) {
-  const count = ref(initialValue)
+export function useCounter() {
+  const count = ref(0)
 
   const inc = () => count.value = count.value + 1
   const dec = () => count.value = count.value - 1
-  const reset = () => count.value = initialValue
+  const reset = () => count.value = 0
 
   return { count, inc ,dec, reset }
 }
 ```
 
-- 簡易版はこれだけです。
-- これを徐々に拡張していって、本家の useCounter の機能に近いものを作ってみましょう
+こんな感じでソースコードは少なめですが、値の増減(1ずつ)と初期値(0)へのリセットができるようになりました。
+
+これを徐々に拡張して、本家の機能に近づけてみましょう。
+
+## 増減の幅や初期値を指定できるようにする
+
+
 
 ## カウントを指定された範囲内で上限させる
 
