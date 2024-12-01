@@ -15,15 +15,19 @@ ignorePublish: true
 
 使ったことがある人は多いと思いますが、その内部実装を見たことはありますでしょうか?
 
-今回は [useCounter](https://vueuse.org/shared/useCounter/) を段階的に作ってみようと思います。
+今回は [useCounter](https://vueuse.org/shared/useCounter/) を段階的に作ってみることで、内部実装の理解をしていこうと思います。
 
 ## どういうコンポーザブルか
 
 リアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、リセット、指定した値にセットなどができます。
 
-動作についてはドキュメントの [Demo](https://vueuse.org/shared/useCounter/#demo) を触ってもらうのが一番わかりやすいと思います。
+動作については公式ドキュメントに [Demo](https://vueuse.org/shared/useCounter/#demo) があるので、それを動かしてもらうのがわかりやすいと思います。
 
-## まずは値の増減、リセットだけ
+## カウントの増減、リセット
+
+まずは最小限な実装としてカウントの増減(1 ずつ)とリセット(0 固定)だけできるようなコンポーザブルを作ってみます。
+
+### 実装
 
 ```ts
 import { ref } from 'vue'
@@ -43,13 +47,46 @@ export function useCounter() {
 }
 ```
 
-これについては特に解説は必要ないかなと思います。
-
-ソースコードは少ないですが、これで値の増減(1 ずつ)と初期値(0)へのリセットができます。
+特に詳細な解説も必要ないかなと思います。
 
 これを徐々に拡張して、本家の機能に近づけてみましょう。
 
-## 増減の変化量やカウントの初期値を指定できるようにする
+
+<!-- 幅取るので使用例は折りたたみでいい -->
+### 使用例
+
+```vue
+<script setup lang="ts">
+import { useCounter } from '@/composables/useCounter';
+
+const { count, inc, dec, reset } = useCounter();
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button type="button" @click="inc()">
+      Increment
+    </button>
+    <button type="button" @click="dec()">
+      Decrement
+    </button>
+    <button type="button" @click="reset()">
+      Reset
+    </button>
+  </div>
+</template>
+```
+
+## 使用者側で増減の変化量などを指定できるようにする
+
+次に下記の機能を追加してみましょう。
+
+- カウントの増減の変化量を使用者側が指定できるようにする
+- カウントの初期値を使用者側が指定できうようにする
+- リセット時の値を指定できるようにする
+
+### 実装
 
 ```ts
 import { ref } from 'vue';
@@ -78,9 +115,11 @@ export function useCounter(initialValue: number = 0) {
 }
 ```
 
-ポイントとしてはリセット時に初期値 (_initialValue) を与えられた引数 (`val`) で更新していることでしょうか。
+ポイントとしてはリセット時に初期値 (`_initialValue`) を与えられた引数 (`val`) で更新していることでしょうか。
 
 これにより次回以降 `reset` が引数なしで使われた際に、その値にリセットされるようになります。
+
+これは本家がそうなっているので合わせたのですが、別にそんな機能いらない場合は省いてもいいと思います。
 
 ```ts
 const { count, reset } = useCounter(10)
@@ -92,36 +131,125 @@ reset(50) // count を 50 にリセット
 reset() // count を新しい初期値の 50 にリセット
 ```
 
-## カウントを指定された範囲内で上限させる
+
+### 使用例
+
+```vue
+<script setup lang="ts">
+import { useCounter } from '@/composables/useCounter';
+
+const { count, inc, dec, set, reset } = useCounter(10);
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button type="button" @click="inc()">
+      Increment
+    </button>
+    <button type="button" @click="dec()">
+      Decrement
+    </button>
+    <button type="button" @click="inc(5)">
+      Increment (+5)
+    </button>
+    <button type="button" @click="dec(5)">
+      Decrement (-5)
+    </button>
+    <button type="button" @click="set(100)">
+      Set (100)
+    </button>
+    <button type="button" @click="reset()">
+      Reset
+    </button>
+    <button type="button" @click="reset(20)">
+      Reset (20)
+    </button>
+  </div>
+</template>
+```
+
+## カウントを指定された範囲内で増減させる
+
+無制限に増減させるのではなく、決められた範囲内でのみ増減させたい場合があるかもしれません。
+
+今度はその機能を実装してみましょう。
+
+### 実装
 
 ```ts
-import { ref } from 'vue'
+import { ref } from 'vue';
 
+// 範囲の型。片方だけ指定したい場合もあるのでどちらもオプショナルにしている
 export interface UseCounterOptions {
-  min?: number
-  max?: number
+  min?: number;
+  max?: number;
 }
 
+// 引数に範囲のオプションを追加 (デフォは空オブジェクト)
 export function useCounter(initialValue: number = 0, options: UseCounterOptions = {}) {
-  const count = ref(initialValue)
+  let _initialValue = initialValue;
+  const count = ref(initialValue);
 
+  // 最小値と最大値を取り出す。指定されてない場合はデフォルト値を設定
   const {
+    // デフォは正の無限大 (`Infinity`)
     max = Number.POSITIVE_INFINITY,
+    // デフォは負の無限大 (`-Infinity`)
     min = Number.NEGATIVE_INFINITY,
-  } = options
+  } = options;
 
-  const inc = () => count.value = Math.max(Math.min(max, count.value + 1), min)
-  const dec = () => count.value = Math.min(Math.max(min, count.value - 1), max)
-  // TODO: initialValue が範囲外だった場合は?
-  const reset = () => count.value = initialValue
+  const inc = (delta = 1) => count.value = Math.min(max, count.value + delta);
+  const dec = (delta = 1) => count.value = Math.max(min, count.value - delta);
+  const set = (val: number) => (count.value = Math.max(min, Math.min(max, val)));
+  const reset = (val = _initialValue) => {
+    _initialValue = val;
+    return set(val);
+  };
 
-  return { count, inc, dec, reset }
+  return { count, inc, dec, set, reset };
 }
 ```
 
-- オプションで最小値と最大値を受け取るようにする
-<!-- TODO: 工夫している部分を解説 -->
-- 範囲内で増減するように工夫する
+ここでのポイントは範囲を指定しない場合でも問題なく動くようにデフォルトの値を設定していることだと思います。
 
+カウントをいくら増減しても範囲を超えないように最大値には正の無限大数、最小値には負の無限大数を設定しています。
 
-## 指定した値の増減、指定した値にリセット
+https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Infinity
+
+<!-- TODO: 増減の変化量に負の値を設ける場合 -->
+
+### 使用例
+
+```vue
+<script setup lang="ts">
+import { useCounter } from '@/composables/useCounter';
+
+const { count, inc, dec, set, reset } = useCounter(10, { min: 0, max: 100 });
+</script>
+
+<template>
+  <div>
+    <p>Count: {{ count }}</p>
+    <button @click="inc()">
+      Increment
+    </button>
+    <button @click="dec()">
+      Decrement
+    </button>
+    <button @click="inc(5)">
+      Increment (+5)
+    </button>
+    <button @click="dec(5)">
+      Decrement (-5)
+    </button>
+    <button @click="set(100)">
+      Set (100)
+    </button>
+    <button @click="reset()">
+      Reset
+    </button>
+  </div>
+</template>
+```
+
