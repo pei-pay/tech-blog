@@ -19,7 +19,7 @@ ignorePublish: true
 
 ## どういうコンポーザブルか
 
-リアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、指定した値にセット、リセットなどができます。
+リアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、リセット、指定した値にセットなどができます。
 
 動作についてはドキュメントの [Demo](https://vueuse.org/shared/useCounter/#demo) を触ってもらうのが一番わかりやすいと思います。
 
@@ -45,7 +45,7 @@ export function useCounter() {
 
 これについては特に解説は必要ないかなと思います。
 
-ソースコードは少なめですが、これで値の増減(1ずつ)と初期値(0)へのリセットができます。
+ソースコードは少ないですが、これで値の増減(1ずつ)と初期値(0)へのリセットができます。
 
 これを徐々に拡張して、本家の機能に近づけてみましょう。
 
@@ -56,26 +56,41 @@ import { ref } from 'vue';
 
 // 引数で初期値 (initialValue) を受け取る
 export function useCounter(initialValue: number = 0) {
+  // 初期値を let で管理することで更新可能にしている
+  let _initialValue = initialValue
   // カウントの初期値を設定
   const count = ref(initialValue);
 
   // 変化量 (delta) を引数で受け取りその分増減させる
   const inc = (delta = 1) => count.value = count.value + delta;
   const dec = (delta = 1) => count.value = count.value - delta;
-  // 特定の値にカウントの値をセット
+  // 指定した値にセットさせる関数に追加
   const set = (val: number) => count.value = val;
-  // 特定の値にリセットさせる。デフォルトは初期値。
-  const reset = (val = initialValue) => {
-    initialValue = val;
+  // 指定した値にリセットできるように引数を受け取るよう変更 (デフォは初期値)
+  const reset = (val = _initialValue) => {
+    // 初期値を更新。次回以降のデフォ値もその値になる
+    _initialValue = val;
     return set(val);
   };
 
+  // set も利用できるようリターンに追加
   return { count, inc, dec, set, reset };
 }
 ```
 
-- reset は一度引数を与えると、以後その値にリセットさせるようにしている (本家の実装に合わせた)
-- set 関数を追加。これで特定の値にセットする機能も追加された。
+ポイントとしてはリセット時に初期値 (_initialValue) を与えられた引数 (`val`) で更新していることでしょうか。
+
+これにより次回以降 `reset` が引数なしで使われた際に、その値にリセットされるようになります。
+
+```ts
+const { count, reset } = useCounter(10)
+
+reset() // count を 10 にリセット
+
+reset(50) // count を 50 にリセット
+
+reset() // count を新しい初期値の 50 にリセット
+```
 
 ## カウントを指定された範囲内で上限させる
 
