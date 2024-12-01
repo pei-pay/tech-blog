@@ -15,13 +15,13 @@ ignorePublish: true
 
 使ったことがある人は多いと思いますが、その内部実装を見たことはありますでしょうか?
 
-今回は [useCounter](https://vueuse.org/shared/useCounter/) を段階的に作ってみることで、内部実装の理解をしていこうと思います。
+今回は [useCounter](https://vueuse.org/shared/useCounter/) を段階的に作ってみることで、その内部実装を理解していこうと思います。
 
 ## どういうコンポーザブルか
 
-リアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、リセット、指定した値にセットなどができます。
+`useCounter` はリアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、リセット、指定した値にセットなどができます。
 
-動作については公式ドキュメントに [Demo](https://vueuse.org/shared/useCounter/#demo) があるので、それを動かしてもらうのがわかりやすいと思います。
+実際の動作については公式ドキュメントに [Demo](https://vueuse.org/shared/useCounter/#demo) があるので、それを動かしてもらうのがわかりやすいと思います。
 
 ## カウントの増減、リセット
 
@@ -52,8 +52,7 @@ export function useCounter() {
 これを徐々に拡張して、本家の機能に近づけてみましょう。
 
 
-<!-- 幅取るので使用例は折りたたみでいい -->
-### 使用例
+<details><summary>使用例</summary>
 
 ```vue
 <script setup lang="ts">
@@ -77,6 +76,8 @@ const { count, inc, dec, reset } = useCounter();
   </div>
 </template>
 ```
+
+</details>
 
 ## 使用者側で増減の変化量などを指定できるようにする
 
@@ -131,8 +132,7 @@ reset(50) // count を 50 にリセット
 reset() // count を新しい初期値の 50 にリセット
 ```
 
-
-### 使用例
+<details><summary>使用例</summary>
 
 ```vue
 <script setup lang="ts">
@@ -169,6 +169,8 @@ const { count, inc, dec, set, reset } = useCounter(10);
 </template>
 ```
 
+</details>
+
 ## カウントを指定された範囲内で増減させる
 
 無制限に増減させるのではなく、決められた範囲内でのみ増減させたい場合があるかもしれません。
@@ -193,9 +195,9 @@ export function useCounter(initialValue: number = 0, options: UseCounterOptions 
 
   // 最小値と最大値を取り出す。指定されてない場合はデフォルト値を設定
   const {
-    // デフォは正の無限大 (`Infinity`)
+    // デフォは正の無限大 (Infinity)
     max = Number.POSITIVE_INFINITY,
-    // デフォは負の無限大 (`-Infinity`)
+    // デフォは負の無限大 (-Infinity)
     min = Number.NEGATIVE_INFINITY,
   } = options;
 
@@ -217,9 +219,25 @@ export function useCounter(initialValue: number = 0, options: UseCounterOptions 
 
 https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Infinity
 
-<!-- TODO: 増減の変化量に負の値を設ける場合 -->
+:::note info
+ユースケースによっては `inc`, `dec` の引数 (`delta`) に負の数を指定したい場合があるかもしれません。
 
-### 使用例
+その場合は、`inc` で最小値を下回らないように、`dec` で最大値を下回らないように実装する必要があります。
+
+```diff
+- const inc = (delta = 1) => count.value = Math.min(max, count.value + delta);
++ const inc = (delta = 1) => count.value = Math.max(Math.min(max, count.value + delta), min)
+- const dec = (delta = 1) => count.value = Math.max(min, count.value - delta);
++ const dec = (delta = 1) => count.value = Math.min(Math.max(min, count.value - delta), max)
+```
+
+本家もこっちの実装になっています。
+
+関連イシュー  
+https://github.com/vueuse/vueuse/pull/3650
+:::
+
+<details><summary>使用例</summary>
 
 ```vue
 <script setup lang="ts">
@@ -252,4 +270,16 @@ const { count, inc, dec, set, reset } = useCounter(10, { min: 0, max: 100 });
   </div>
 </template>
 ```
+
+</details>
+
+## 最後に
+
+実はここまでの実装で本家のソースコードとほぼ同じになっています。
+
+本家: https://github.com/vueuse/vueuse/blob/main/packages/shared/useCounter/index.ts
+
+まだ追加できてない機能としては、カウントの値を取得するようのゲッター関数を用意したり、引数で受け取る初期値の値で `ref` を許容すると言うのがありますが、今回は省きます。気になる方はソースコードを参考に実装してみてください。
+
+`useCounter` は VueUse の中でも簡単な実装なので、そこまでソースコードも多くないですね。今後も他のコンポーザブルを作ってみる記事を書きたいと思います！
 
