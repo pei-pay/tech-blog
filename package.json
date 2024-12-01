@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "textlint": "textlint public",
+    "textlint:fix": "textlint --fix public"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +15,8 @@
     "zenn-cli": "^0.1.158"
   },
   "devDependencies": {
-    "@qiita/qiita-cli": "^1.6.1"
+    "@qiita/qiita-cli": "^1.6.1",
+    "textlint": "^14.3.0",
+    "textlint-rule-ja-space-between-half-and-full-width": "^2.4.2"
   }
 }
