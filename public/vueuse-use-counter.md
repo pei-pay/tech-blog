@@ -7,9 +7,11 @@ updated_at: ''
 id: null
 organization_url_name: null
 slide: false
-ignorePublish: true
+ignorePublish: false
 ---
 # VueUse の useCounter を作ってみる
+
+## はじめに
 
 [VueUse](https://vueuse.org/) にはたくさんの便利なコンポーザブルがあります。
 
@@ -20,6 +22,8 @@ ignorePublish: true
 ## どういうコンポーザブルか
 
 `useCounter` はリアクティブな数値のカウントをいい感じに管理するためのものです。カウントの増減、リセット、指定した値にセットなどができます。
+
+「クリックされた回数をカウントしたい」「カート内の商品数を管理したい」などの場面で、`useCounter` は非常に便利です。
 
 実際の動作については公式ドキュメントに [Demo](https://vueuse.org/shared/useCounter/#demo) があるので、それを動かしてもらうのがわかりやすいと思います。
 
@@ -52,7 +56,7 @@ export function useCounter() {
 これを徐々に拡張して、本家の機能に近づけてみましょう。
 
 
-<details><summary>使用例</summary>
+<details><summary>サンプルコードを展開して確認</summary>
 
 ```vue
 <script setup lang="ts">
@@ -120,8 +124,6 @@ export function useCounter(initialValue: number = 0) {
 
 これにより次回以降 `reset` が引数なしで使われた際に、その値にリセットされるようになります。
 
-これは本家がそうなっているので合わせたのですが、別にそんな機能いらない場合は省いてもいいと思います。
-
 ```ts
 const { count, reset } = useCounter(10)
 
@@ -132,7 +134,7 @@ reset(50) // count を 50 にリセット
 reset() // count を新しい初期値の 50 にリセット
 ```
 
-<details><summary>使用例</summary>
+<details><summary>サンプルコードを展開して確認</summary>
 
 ```vue
 <script setup lang="ts">
@@ -215,14 +217,14 @@ export function useCounter(initialValue: number = 0, options: UseCounterOptions 
 
 ここでのポイントは範囲を指定しない場合でも問題なく動くようにデフォルトの値を設定していることだと思います。
 
-カウントをいくら増減しても範囲を超えないように最大値には正の無限大数、最小値には負の無限大数を設定しています。
+カウントをいくら増減しても範囲を超えないように最大値には正の無限大数 (`Infinity`)、最小値には負の無限大数 (`-Infinity`) を設定しています。
 
 https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Infinity
 
 :::note info
 ユースケースによっては `inc`, `dec` の引数 (`delta`) に負の数を指定したい場合があるかもしれません。
 
-その場合は、`inc` で最小値を下回らないように、`dec` で最大値を下回らないように実装する必要があります。
+その場合は `inc` で最小値を下回らないように、`dec` で最大値を下回らないように実装する必要があります。
 
 ```diff
 - const inc = (delta = 1) => count.value = Math.min(max, count.value + delta);
@@ -237,7 +239,7 @@ https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/In
 https://github.com/vueuse/vueuse/pull/3650
 :::
 
-<details><summary>使用例</summary>
+<details><summary>サンプルコードを展開して確認</summary>
 
 ```vue
 <script setup lang="ts">
@@ -279,7 +281,7 @@ const { count, inc, dec, set, reset } = useCounter(10, { min: 0, max: 100 });
 
 本家: https://github.com/vueuse/vueuse/blob/main/packages/shared/useCounter/index.ts
 
-まだ追加できてない機能としては、カウントの値を取得するようのゲッター関数を用意したり、引数で受け取る初期値の値で `ref` を許容すると言うのがありますが、今回は省きます。気になる方はソースコードを参考に実装してみてください。
+まだ追加できてない機能としては、カウントの値を取得する用のゲッター関数を用意したり、引数で受け取る初期値の値で `ref` を許容すると言うのがありますが今回は省きます。気になる方はぜひ実装してみてください。
 
 `useCounter` は VueUse の中でも簡単な実装なので、そこまでソースコードも多くないですね。今後も他のコンポーザブルを作ってみる記事を書きたいと思います！
 
