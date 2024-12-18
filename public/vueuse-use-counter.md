@@ -2,8 +2,8 @@
 title: VueUse の useCounter を作ってみる
 tags:
   - Vue.js
-private: true
-updated_at: '2024-12-06T20:07:13+09:00'
+private: false
+updated_at: '2024-12-07T00:21:54+09:00'
 id: cbdd44309615b535c9f7
 organization_url_name: null
 slide: false
@@ -301,3 +301,4 @@ const { count, inc, dec, set, reset } = useCounter(10, { min: 0, max: 100 });
 本記事では、`useCounter` の基本的な実装から、柔軟なオプション機能の追加までを段階的に解説しました。
 
 今後も VueUse のコンポーザブルを 1 から作成する方法について解説していきたいと思います！
+
