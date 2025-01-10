@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "textlint": "textlint public",
-    "textlint:fix": "textlint --fix public"
+    "textlint:fix": "textlint --fix public",
+    "qiita:pull": "qiita pull"
   },
   "keywords": [],
   "author": "",
