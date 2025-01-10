@@ -1,7 +1,7 @@
 ---
 title: "VueUse の useRefHistory を作ってみる"
-emoji: "👀"
-type: "tech" # tech: 技術記事 / idea: アイデア
+emoji: "🕒"
+type: "tech"
 topics: [vue.js]
 published: false
 ---
